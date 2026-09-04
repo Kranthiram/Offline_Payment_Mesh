@@ -45,7 +45,6 @@ public class SettlementService {
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new IllegalStateException("Concurrent update detected, settlement aborted", e);
         }
-
         Transaction transaction = new Transaction(
                 sender.getVpa(), receiver.getVpa(), amount, packetHash);
         return transactionRepository.save(transaction);
