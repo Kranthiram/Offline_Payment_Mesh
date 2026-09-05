@@ -53,7 +53,8 @@ public class BridgeIngestionService {
         public final String detail;
         public final Transaction transaction;
 
-        private IngestResult(String status, String detail, Transaction transaction) {
+        private IngestResult(String status, String detail, Transaction transaction)
+        {
             this.status = status;
             this.detail = detail;
             this.transaction = transaction;
