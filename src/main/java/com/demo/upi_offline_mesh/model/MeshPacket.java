@@ -15,7 +15,7 @@ public class MeshPacket {
         this.ciphertext = ciphertext;
     }
 
-    public String getPackedId(){
+    public String getPacketId(){
         return packetId;
     }
     public void setPacketId(String packetId){
