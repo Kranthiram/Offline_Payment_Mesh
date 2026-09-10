@@ -1,0 +1,2 @@
+INSERT INTO accounts (vpa, owner_name, balance, version) VALUES ('alice@upimesh', 'Alice', 5000.00, 0);
+INSERT INTO accounts (vpa, owner_name, balance, version) VALUES ('bob@upimesh', 'Bob', 3000.00, 0);
