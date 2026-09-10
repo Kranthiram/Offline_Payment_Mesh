@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>UPI Offline Mesh — Demo Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        button { padding: 10px 16px; margin: 5px; cursor: pointer; }
+        .panel { border: 1px solid #ccc; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        pre { background: #f4f4f4; padding: 12px; border-radius: 6px; overflow-x: auto; }
+        input { padding: 6px; margin: 4px; }
+    </style>
+</head>
+<body>
+<h1>UPI Offline Mesh — Demo Dashboard</h1>
+
+<div class="panel">
+    <h3>1. Setup Mesh</h3>
+    <button onclick="setupMesh()">Initialize 5 devices (4 phones + 1 bridge)</button>
+</div>
+
+<div class="panel">
+    <h3>2. Inject Payment</h3>
+    Sender: <input id="sender" value="alice@upimesh">
+    Receiver: <input id="receiver" value="bob@upimesh">
+    Amount: <input id="amount" value="100">
+    <button onclick="injectPayment()">Inject into phone-A</button>
+</div>
+
+<div class="panel">
+    <h3>3. Propagate (Gossip Rounds)</h3>
+    <button onclick="propagate()">Run gossip rounds</button>
+</div>
+
+<div class="panel">
+    <h3>4. Sync Bridges (settle to backend)</h3>
+    <button onclick="syncBridges()">Sync bridge devices</button>
+</div>
+
+<div class="panel">
+    <h3>Device Status</h3>
+    <button onclick="refreshDevices()">Refresh</button>
+    <pre id="devicesOutput">Click refresh to see device inbox sizes</pre>
+</div>
+
+<div class="panel">
+    <h3>Settled Transactions</h3>
+    <button onclick="refreshTransactions()">Refresh</button>
+    <pre id="txOutput">Click refresh to see transactions</pre>
+</div>
+
+<div class="panel">
+    <h3>Last Action Result</h3>
+    <pre id="resultOutput">-</pre>
+</div>
+
+<script>
+    async function post(url, body) {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const data = await res.json();
+        document.getElementById('resultOutput').textContent = JSON.stringify(data, null, 2);
+        return data;
+    }
+
+    function setupMesh() { post('/api/mesh/setup'); }
+
+    function injectPayment() {
+        const sender = document.getElementById('sender').value;
+        const receiver = document.getElementById('receiver').value;
+        const amount = parseFloat(document.getElementById('amount').value);
+        post('/api/mesh/inject', { senderVpa: sender, receiverVpa: receiver, amount: amount });
+    }
+
+    function propagate() { post('/api/mesh/propagate'); }
+
+    function syncBridges() { post('/api/mesh/sync'); }
+
+    async function refreshDevices() {
+        const res = await fetch('/api/mesh/devices');
+        const data = await res.json();
+        document.getElementById('devicesOutput').textContent = JSON.stringify(data, null, 2);
+    }
+
+    async function refreshTransactions() {
+        const res = await fetch('/api/transactions');
+        const data = await res.json();
+        document.getElementById('txOutput').textContent = JSON.stringify(data, null, 2);
+    }
+</script>
+</body>
+</html>
