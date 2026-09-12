@@ -12,20 +12,27 @@
     --text-muted: #6b7280;
     --bg: #f9fafb;
     --card-bg: #ffffff;
+
+    /* step shades - sea blue progression */
+    --step1: #4CC9F0;
+    --step2: #4895EF;
+    --step3: #4361EE;
+    --step4: #2B35AF;
 }
 
 * { box-sizing: border-box; }
 
 body {
     font-family: 'Segoe UI', Roboto, Arial, sans-serif;
-    background: var(--bg);
+    background: #b3e5fc;
     color: var(--text);
     margin: 0;
     padding: 0 0 60px 0;
+    text-align: center;
 }
 
 header {
-    background: var(--card-bg);
+    background:#E6E6FA;
     border-bottom: 1px solid var(--border);
     padding: 24px 20px;
     margin-bottom: 24px;
@@ -55,11 +62,109 @@ header p {
     border-radius: 10px;
     padding: 20px 24px;
     margin-bottom: 18px;
+    text-align: center;
+}
+
+/* colored step cards - progressively darker blue shades */
+.step-card.shade-1 { background: var(--step1); border: none; }
+.step-card.shade-2 { background: var(--step2); border: none; }
+.step-card.shade-3 { background: var(--step3); border: none; }
+.step-card.shade-4 { background: var(--step4); border: none; }
+
+.step-card.shade-1 .step-title,
+.step-card.shade-2 .step-title,
+.step-card.shade-3 .step-title,
+.step-card.shade-4 .step-title { color: #ffffff; }
+
+.step-card.shade-1 .step-desc,
+.step-card.shade-2 .step-desc,
+.step-card.shade-3 .step-desc,
+.step-card.shade-4 .step-desc { color: rgba(255,255,255,0.85); }
+
+.step-card.shade-1 .step-number,
+.step-card.shade-2 .step-number,
+.step-card.shade-3 .step-number,
+.step-card.shade-4 .step-number {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+}
+
+.step-card.shade-1 button,
+.step-card.shade-2 button,
+.step-card.shade-3 button,
+.step-card.shade-4 button {
+    background: #fff;
+    color: var(--text);
+}
+
+.step-card.shade-1 button:hover,
+.step-card.shade-2 button:hover,
+.step-card.shade-3 button:hover,
+.step-card.shade-4 button:hover {
+    background: #f0f0f0;
+}
+
+.step-card.shade-1 .field label,
+.step-card.shade-2 .field label,
+.step-card.shade-3 .field label,
+.step-card.shade-4 .field label {
+    color: rgba(255,255,255,0.9);
+}
+
+.step-card.shade-1 .result-detail,
+.step-card.shade-2 .result-detail,
+.step-card.shade-3 .result-detail,
+.step-card.shade-4 .result-detail {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Device status - yellow theme */
+.step-card.status-yellow {
+    background: #fef9c3;
+    border: 1px solid #fde047;
+}
+
+/* Settled transactions - WhatsApp-style green theme */
+.step-card.status-green {
+    background: #25D366;
+    border: none;
+}
+
+.step-card.status-green .step-title,
+.step-card.status-green .step-desc {
+    color: #ffffff;
+}
+
+.step-card.status-green table th {
+    color: rgba(255,255,255,0.85);
+    border-bottom-color: rgba(255,255,255,0.3);
+}
+
+.step-card.status-green table td {
+    color: #ffffff;
+    border-bottom-color: rgba(255,255,255,0.2);
+}
+
+.step-card.status-green .empty-state {
+    color: rgba(255,255,255,0.85);
+}
+
+.step-card.status-green button.secondary {
+    background: #ffffff;
+    color: #128C4A;
+    border: none;
+}
+
+.step-card.status-green button.secondary:hover {
+    background: #f0f0f0;
 }
 
 .step-header {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 12px;
     margin-bottom: 14px;
 }
@@ -87,7 +192,7 @@ header p {
 .step-desc {
     font-size: 13px;
     color: var(--text-muted);
-    margin: -8px 0 14px 40px;
+    margin: -8px 0 14px 0;
 }
 
 .form-row {
@@ -95,12 +200,14 @@ header p {
     gap: 12px;
     margin-bottom: 14px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .field {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    align-items: center;
 }
 
 .field label {
@@ -115,6 +222,7 @@ header p {
     border-radius: 6px;
     font-size: 14px;
     width: 160px;
+    text-align: center;
 }
 
 .field input:focus {
@@ -147,6 +255,7 @@ button.secondary:hover { background: #eff6ff; }
 .result-box {
     margin-top: 14px;
     display: none;
+    text-align: center;
 }
 
 .result-box.visible { display: block; }
@@ -173,6 +282,7 @@ button.secondary:hover { background: #eff6ff; }
     border-radius: 6px;
     padding: 10px 12px;
     font-family: 'Consolas', monospace;
+    text-align: left;
 }
 
 table {
@@ -183,7 +293,7 @@ table {
 }
 
 th {
-    text-align: left;
+    text-align: center;
     color: var(--text-muted);
     font-weight: 600;
     padding: 8px 10px;
@@ -195,6 +305,7 @@ th {
 td {
     padding: 10px;
     border-bottom: 1px solid var(--border);
+    text-align: center;
 }
 
 tr:last-child td { border-bottom: none; }
