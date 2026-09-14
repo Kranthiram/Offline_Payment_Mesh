@@ -24,7 +24,8 @@ public class SettlementService {
     }
 
     @Transactional
-    public Transaction settle(PaymentInstruction instruction, String packetHash) {
+    public Transaction settle(PaymentInstruction instruction, String packetHash,
+                              String bridgeNodeId, int hopCount) {
         Account sender = accountRepository.findById(instruction.getSenderVpa())
                 .orElseThrow(() -> new IllegalArgumentException("Unknown sender: " + instruction.getSenderVpa()));
         Account receiver = accountRepository.findById(instruction.getReceiverVpa())
@@ -45,8 +46,9 @@ public class SettlementService {
         } catch (ObjectOptimisticLockingFailureException e) {
             throw new IllegalStateException("Concurrent update detected, settlement aborted", e);
         }
+
         Transaction transaction = new Transaction(
-                sender.getVpa(), receiver.getVpa(), amount, packetHash);
+                sender.getVpa(), receiver.getVpa(), amount, packetHash, bridgeNodeId, hopCount);
         return transactionRepository.save(transaction);
     }
 }

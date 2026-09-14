@@ -39,7 +39,8 @@ public class MeshSimulatorService {
 
                     MeshPacket forwarded = new MeshPacket(
                             packet.getPacketId(),
-                            packet.getTtl() - 1,          // TTL decrements on each hop
+                            packet.getTtl() - 1,
+                            packet.getHopCount() + 1,
                             packet.getCreatedAt(),
                             packet.getCiphertext()
                     );
@@ -49,12 +50,16 @@ public class MeshSimulatorService {
         }
     }
 
-    public List<MeshPacket> collectFromBridges() {
-        List<MeshPacket> collected = new ArrayList<>();
+    public record BridgeCollection(String bridgeDeviceId, MeshPacket packet) {}
+
+    public List<BridgeCollection> collectFromBridges() {
+        List<BridgeCollection> collected = new ArrayList<>();
         for (VirtualDevice device : devices) {
             if (device.hasInternet()) {
-                collected.addAll(device.getInbox());
-                device.clearInbox();   // simulate "uploaded, cleared from local storage"
+                for (MeshPacket packet : device.getInbox()) {
+                    collected.add(new BridgeCollection(device.getDeviceId(), packet));
+                }
+                device.clearInbox();
             }
         }
         return collected;

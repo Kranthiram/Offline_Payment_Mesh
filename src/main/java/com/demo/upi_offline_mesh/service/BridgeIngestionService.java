@@ -1,6 +1,5 @@
 package com.demo.upi_offline_mesh.service;
 
-
 import com.demo.upi_offline_mesh.crypto.HybridCryptoService;
 import com.demo.upi_offline_mesh.model.MeshPacket;
 import com.demo.upi_offline_mesh.model.PaymentInstruction;
@@ -26,11 +25,10 @@ public class BridgeIngestionService {
         this.objectMapper = objectMapper;
     }
 
-    public IngestResult ingest(MeshPacket packet) {
+    public IngestResult ingest(MeshPacket packet, String bridgeDeviceId) {
         try {
             String packetHash = cryptoService.hashCiphertext(packet.getCiphertext());
 
-            // idempotency check FIRST — avoid decrypting duplicates unnecessarily
             boolean isFirstTime = idempotencyService.markIfFirstSeen(packetHash);
             if (!isFirstTime) {
                 return IngestResult.duplicate(packetHash);
@@ -39,7 +37,8 @@ public class BridgeIngestionService {
             String plaintextJson = cryptoService.decrypt(packet.getCiphertext());
             PaymentInstruction instruction = objectMapper.readValue(plaintextJson, PaymentInstruction.class);
 
-            Transaction transaction = settlementService.settle(instruction, packetHash);
+            Transaction transaction = settlementService.settle(
+                    instruction, packetHash, bridgeDeviceId, packet.getHopCount());
             return IngestResult.success(transaction);
 
         } catch (Exception e) {
@@ -47,14 +46,12 @@ public class BridgeIngestionService {
         }
     }
 
-    // simple inner result wrapper
     public static class IngestResult {
         public final String status;
         public final String detail;
         public final Transaction transaction;
 
-        private IngestResult(String status, String detail, Transaction transaction)
-        {
+        private IngestResult(String status, String detail, Transaction transaction) {
             this.status = status;
             this.detail = detail;
             this.transaction = transaction;

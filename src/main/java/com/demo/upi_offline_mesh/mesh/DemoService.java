@@ -59,6 +59,7 @@ public class DemoService {
         MeshPacket packet = new MeshPacket(
                 UUID.randomUUID().toString(),
                 INITIAL_TTL,
+                0,
                 System.currentTimeMillis(),
                 ciphertext
         );
@@ -76,10 +77,10 @@ public class DemoService {
 
     // Collects packets from bridge devices and pushes them to the backend for settlement.
     public List<BridgeIngestionService.IngestResult> syncBridges() {
-        List<MeshPacket> collected = meshSimulatorService.collectFromBridges();
+        List<MeshSimulatorService.BridgeCollection> collected = meshSimulatorService.collectFromBridges();
         List<BridgeIngestionService.IngestResult> results = new ArrayList<>();
-        for (MeshPacket packet : collected) {
-            results.add(bridgeIngestionService.ingest(packet));
+        for (MeshSimulatorService.BridgeCollection item : collected) {
+            results.add(bridgeIngestionService.ingest(item.packet(), item.bridgeDeviceId()));
         }
         return results;
     }
