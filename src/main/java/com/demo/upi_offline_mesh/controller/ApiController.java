@@ -1,9 +1,11 @@
 package com.demo.upi_offline_mesh.controller;
 
 
+import com.demo.upi_offline_mesh.Repository.AccountRepository;
 import com.demo.upi_offline_mesh.Repository.TransactionRepository;
 import com.demo.upi_offline_mesh.mesh.DemoService;
 import com.demo.upi_offline_mesh.mesh.MeshSimulatorService;
+import com.demo.upi_offline_mesh.model.Account;
 import com.demo.upi_offline_mesh.service.BridgeIngestionService;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,12 +21,21 @@ public class ApiController {
     private final DemoService demoService;
     private final MeshSimulatorService meshSimulatorService;
     private final TransactionRepository transactionRepository;
+    private final AccountRepository accountRepository;   // NEW
+
     public ApiController(DemoService demoService,
                          MeshSimulatorService meshSimulatorService,
-                         TransactionRepository transactionRepository) {
+                         TransactionRepository transactionRepository,
+                         AccountRepository accountRepository) {   // NEW parameter
         this.demoService = demoService;
         this.meshSimulatorService = meshSimulatorService;
         this.transactionRepository = transactionRepository;
+        this.accountRepository = accountRepository;   // NEW
+    }
+
+    @GetMapping("/accounts")
+    public List<Account> getAccounts() {
+        return accountRepository.findAll();
     }
 
     @PostMapping("/mesh/setup")
