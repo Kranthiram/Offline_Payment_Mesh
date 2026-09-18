@@ -7,6 +7,7 @@ import com.demo.upi_offline_mesh.mesh.DemoService;
 import com.demo.upi_offline_mesh.mesh.MeshSimulatorService;
 import com.demo.upi_offline_mesh.model.Account;
 import com.demo.upi_offline_mesh.service.BridgeIngestionService;
+import com.demo.upi_offline_mesh.service.IdempotencyService;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -21,16 +22,19 @@ public class ApiController {
     private final DemoService demoService;
     private final MeshSimulatorService meshSimulatorService;
     private final TransactionRepository transactionRepository;
-    private final AccountRepository accountRepository;   // NEW
+    private final AccountRepository accountRepository;
+    private final IdempotencyService idempotencyService;   // NEW
 
     public ApiController(DemoService demoService,
                          MeshSimulatorService meshSimulatorService,
                          TransactionRepository transactionRepository,
-                         AccountRepository accountRepository) {   // NEW parameter
+                         AccountRepository accountRepository,
+                         IdempotencyService idempotencyService) {   // NEW parameter
         this.demoService = demoService;
         this.meshSimulatorService = meshSimulatorService;
         this.transactionRepository = transactionRepository;
-        this.accountRepository = accountRepository;   // NEW
+        this.accountRepository = accountRepository;
+        this.idempotencyService = idempotencyService;   // NEW
     }
 
     @GetMapping("/accounts")
@@ -72,6 +76,32 @@ public class ApiController {
         return transactionRepository.findTop20ByOrderBySettledAtDesc();
     }
 
+    @GetMapping("/mesh/state")
+    public Map<String, Object> getMeshState() {
+        List<Map<String, Object>> devices = meshSimulatorService.getDevices().stream()
+                .map(d -> Map.<String, Object>of(
+                        "deviceId", d.getDeviceId(),
+                        "hasInternet", d.hasInternet(),
+                        "packetCount", d.getInbox().size(),
+                        "packetIds", d.getInbox().stream()
+                                .map(p -> p.getPacketId().substring(0, 8))
+                                .collect(Collectors.toList())
+                ))
+                .collect(Collectors.toList());
+
+        return Map.of(
+                "devices", devices,
+                "idempotencyCacheSize", idempotencyService.size()
+        );
+    }
+
+    @PostMapping("/mesh/reset")
+    public Map<String, String> resetMesh() {
+        demoService.resetAll();
+        return Map.of("status", "mesh, cache, transactions and balances reset");
+    }
+
     // request DTO — uses a Java record
     public record InjectRequest(String senderVpa, String receiverVpa, BigDecimal amount) {}
 }
+

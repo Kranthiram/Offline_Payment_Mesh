@@ -19,4 +19,12 @@ public class IdempotencyService {
     public boolean isAlreadySettled(String packetHash) {
         return seenHashes.containsKey(packetHash);
     }
+
+    public int size() {
+        return seenHashes.size();
+    }
+
+    public void clear() {
+        seenHashes.clear();
+    }
 }

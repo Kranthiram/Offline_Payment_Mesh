@@ -17,6 +17,9 @@ public class MeshSimulatorService {
         devices.add(device);
     }
 
+    public void resetDevices() {
+        devices.clear();
+    }
     public List<VirtualDevice> getDevices() {
         return devices;
     }
@@ -64,4 +67,6 @@ public class MeshSimulatorService {
         }
         return collected;
     }
+
+
 }
