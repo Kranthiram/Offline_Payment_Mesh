@@ -3,92 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UPI Offline Mesh — Demo Dashboard</title>
+    <title>UPI Offline Mesh — Demo</title>
     <link rel="stylesheet" href="/css/dashboard.css">
 </head>
 <body>
-
-<header>
-    <div class="container">
-        <h1>UPI Offline Mesh — Settlement Dashboard</h1>
-        <p>Simulates offline peer-to-peer UPI payments settling through a mesh network</p>
-    </div>
-</header>
-
 <div class="container">
+    <h1>UPI Offline Mesh — Live Demo</h1>
+    <p class="small">
+        Send money in a basement with zero internet. Encrypted packets gossip from phone to phone
+        until one with internet reaches the backend.
+    </p>
 
-    <div class="step-card shade-1">
-        <div class="step-header">
-            <div class="step-number">1</div>
-            <p class="step-title">Setup Mesh</p>
+    <div class="controls">
+        <h3>Demo Flow</h3>
+
+        <div>
+            <span class="step-num">1</span><strong>Setup Mesh</strong>
+            <button onclick="setupMesh()">Initialize Devices</button>
         </div>
-        <p class="step-desc">Creates 5 virtual devices — 4 offline phones and 1 internet-connected bridge</p>
-        <button onclick="setupMesh()">Initialize Devices</button>
-        <div class="result-box" id="result-setup"></div>
+
+        <div style="margin-top: 16px">
+            <span class="step-num">2</span><strong>Compose Payment</strong>
+            <br>
+            <input id="sender" value="alice@upimesh" style="width: 140px">
+            →
+            <input id="receiver" value="bob@upimesh" style="width: 140px">
+            ₹<input type="number" id="amount" value="100" style="width: 90px">
+            <button onclick="injectPayment()">Inject into phone-A</button>
+        </div>
+
+        <div style="margin-top: 16px">
+            <span class="step-num">3</span><strong>Gossip</strong> — packets hop device-to-device
+            <button class="secondary" onclick="propagate()">Run Gossip Round</button>
+        </div>
+
+        <div style="margin-top: 16px">
+            <span class="step-num">4</span><strong>Bridge uploads to backend</strong>
+            <button class="secondary" onclick="syncBridges()">Sync Bridge Devices</button>
+            <span class="small">(exercises idempotency)</span>
+        </div>
+
+        <div style="margin-top: 16px">
+            <button class="danger" onclick="resetMesh()">Reset Mesh + Cache</button>
+        </div>
     </div>
 
-    <div class="step-card shade-2">
-        <div class="step-header">
-            <div class="step-number">2</div>
-            <p class="step-title">Inject Payment</p>
+    <div class="grid grid-2">
+        <div class="card">
+            <h2>Mesh Devices</h2>
+            <div id="devices"></div>
         </div>
-        <p class="step-desc">Encrypts a payment instruction and injects it into phone-A</p>
-        <div class="form-row">
-            <div class="field">
-                <label>Sender VPA</label>
-                <input id="sender" value="alice@upimesh">
-            </div>
-            <div class="field">
-                <label>Receiver VPA</label>
-                <input id="receiver" value="bob@upimesh">
-            </div>
-            <div class="field">
-                <label>Amount (₹)</label>
-                <input id="amount" value="100">
-            </div>
+
+        <div class="card">
+            <h2>Account Balances</h2>
+            <table id="accounts-table">
+                <thead><tr><th>VPA</th><th>Holder</th><th>Balance</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <p class="small" id="cacheInfo"></p>
         </div>
-        <button onclick="injectPayment()">Inject into phone-A</button>
-        <div class="result-box" id="result-inject"></div>
     </div>
 
-    <div class="step-card shade-3">
-        <div class="step-header">
-            <div class="step-number">3</div>
-            <p class="step-title">Propagate (Gossip Rounds)</p>
-        </div>
-        <p class="step-desc">Runs 4 gossip rounds — packets hop between devices, TTL decrements each hop</p>
-        <button onclick="propagate()">Run Gossip Rounds</button>
-        <div class="result-box" id="result-propagate"></div>
+    <div class="card" style="margin-top: 16px">
+        <h2>Transaction Ledger</h2>
+        <table id="tx-table">
+            <thead><tr>
+                <th>ID</th><th>From</th><th>To</th><th>Amount</th>
+                <th>Bridge</th><th>Hops</th><th>Settled</th>
+            </tr></thead>
+            <tbody></tbody>
+        </table>
     </div>
 
-    <div class="step-card shade-4">
-        <div class="step-header">
-            <div class="step-number">4</div>
-            <p class="step-title">Sync Bridges</p>
-        </div>
-        <p class="step-desc">Bridge device uploads collected packets to backend for decryption and settlement</p>
-        <button onclick="syncBridges()">Sync Bridge Devices</button>
-        <div class="result-box" id="result-sync"></div>
+    <div class="card" style="margin-top: 16px">
+        <h2>Activity Log</h2>
+        <div id="log"></div>
     </div>
-
-    <div class="step-card status-yellow">
-        <div class="step-header">
-            <div class="step-number">•</div>
-            <p class="step-title">Device Status</p>
-        </div>
-        <button class="secondary" onclick="refreshDevices()">Refresh</button>
-        <div id="devicesTable"><p class="empty-state">Click refresh to see device status</p></div>
-    </div>
-
-    <div class="step-card status-green">
-        <div class="step-header">
-            <div class="step-number">•</div>
-            <p class="step-title">Settled Transactions</p>
-        </div>
-        <button class="secondary" onclick="refreshTransactions()">Refresh</button>
-        <div id="txTable"><p class="empty-state">Click refresh to see settled transactions</p></div>
-    </div>
-
 </div>
 
 <script src="/js/dashboard.js"></script>

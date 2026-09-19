@@ -1,93 +1,87 @@
-function showResult(boxId, badgeClass, badgeText, detail) {
-    const box = document.getElementById(boxId);
-    box.className = 'result-box visible';
-    box.innerHTML = `
-        <span class="badge ${badgeClass}">${badgeText}</span>
-        <div class="result-detail">${detail}</div>
-    `;
+function log(msg) {
+    const el = document.getElementById('log');
+    el.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg + '\n' + el.textContent;
 }
 
-async function post(url, body) {
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: body ? JSON.stringify(body) : undefined
-    });
-    return res.json();
+async function refresh() {
+    // Mesh state (devices + idempotency cache size)
+    const m = await fetch('/api/mesh/state').then(r => r.json());
+    const devicesDiv = document.getElementById('devices');
+    devicesDiv.innerHTML = m.devices.map(d => `
+        <div class="device ${d.hasInternet ? 'bridge' : 'offline'}">
+            <strong>${d.deviceId}</strong>
+            <span class="badge ${d.hasInternet ? 'badge-online' : 'badge-offline'}">
+                ${d.hasInternet ? 'BRIDGE' : 'OFFLINE'}
+            </span>
+            <span class="small">holding ${d.packetCount} packet(s)</span>
+            <div>${d.packetIds.map(id => `<span class="packet-id">${id}</span>`).join('')}</div>
+        </div>
+    `).join('');
+    document.getElementById('cacheInfo').textContent =
+        `Idempotency cache size: ${m.idempotencyCacheSize}`;
+
+    // Accounts
+    const accs = await fetch('/api/accounts').then(r => r.json());
+    document.querySelector('#accounts-table tbody').innerHTML = accs.map(a => `
+        <tr><td>${a.vpa}</td><td>${a.ownerName}</td>
+            <td class="balance">₹${parseFloat(a.balance).toFixed(2)}</td></tr>
+    `).join('');
+
+    // Transactions
+    const txs = await fetch('/api/transactions').then(r => r.json());
+    document.querySelector('#tx-table tbody').innerHTML = txs.map(t => `
+        <tr>
+            <td>${t.id}</td><td>${t.senderVpa}</td><td>${t.receiverVpa}</td>
+            <td class="balance">₹${parseFloat(t.amount).toFixed(2)}</td>
+            <td>${t.bridgeNodeId || '-'}</td><td>${t.hopCount}</td>
+            <td class="small">${t.settledAt ? new Date(t.settledAt).toLocaleTimeString() : '-'}</td>
+        </tr>
+    `).join('');
 }
 
 async function setupMesh() {
-    const data = await post('/api/mesh/setup');
-    showResult('result-setup', 'info', 'Done', data.status);
+    const r = await fetch('/api/mesh/setup', { method: 'POST' }).then(r => r.json());
+    log(`Mesh setup: ${r.status}`);
+    refresh();
 }
 
 async function injectPayment() {
-    const sender = document.getElementById('sender').value;
-    const receiver = document.getElementById('receiver').value;
-    const amount = parseFloat(document.getElementById('amount').value);
-    const data = await post('/api/mesh/inject', { senderVpa: sender, receiverVpa: receiver, amount: amount });
-    showResult('result-inject', 'info', 'Injected', data.status || JSON.stringify(data));
+    const body = {
+        senderVpa: document.getElementById('sender').value,
+        receiverVpa: document.getElementById('receiver').value,
+        amount: parseFloat(document.getElementById('amount').value)
+    };
+    const r = await fetch('/api/mesh/inject', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    }).then(r => r.json());
+    log(`Payment injected into phone-A: ${r.status}`);
+    refresh();
 }
 
 async function propagate() {
-    const data = await post('/api/mesh/propagate');
-    showResult('result-propagate', 'info', 'Done', data.status);
+    const r = await fetch('/api/mesh/propagate', { method: 'POST' }).then(r => r.json());
+    log(`Gossip round complete: ${r.status}`);
+    refresh();
 }
 
 async function syncBridges() {
-    const results = await post('/api/mesh/sync');
+    const results = await fetch('/api/mesh/sync', { method: 'POST' }).then(r => r.json());
     if (!results.length) {
-        showResult('result-sync', 'info', 'No Packets', 'No packets waiting at bridge devices');
-        return;
+        log('Sync: no packets waiting at bridge devices');
+    } else {
+        results.forEach(res => {
+            log(`Packet ${res.status}` + (res.detail ? ` — ${res.detail}` : ''));
+        });
     }
-    const summary = results.map(r => {
-        const cls = r.status === 'SETTLED' ? 'settled' : (r.status === 'DUPLICATE' ? 'duplicate' : 'failed');
-        return `<span class="badge ${cls}">${r.status}</span> ${r.detail || (r.transaction ? `${r.transaction.senderVpa} → ${r.transaction.receiverVpa}, ₹${r.transaction.amount}` : '')}`;
-    }).join('<br>');
-    showResult('result-sync', results[0].status === 'SETTLED' ? 'settled' : 'info', `${results.length} packet(s) processed`, summary);
+    refresh();
 }
 
-async function refreshDevices() {
-    const res = await fetch('/api/mesh/devices');
-    const devices = await res.json();
-    if (!devices.length) {
-        document.getElementById('devicesTable').innerHTML = '<p class="empty-state">No devices yet — click Setup Mesh first</p>';
-        return;
-    }
-    let rows = devices.map(d => `
-        <tr>
-            <td>${d.deviceId}</td>
-            <td>${d.hasInternet ? '🌐 Bridge' : '📵 Offline'}</td>
-            <td>${d.inboxSize} packet(s)</td>
-        </tr>
-    `).join('');
-    document.getElementById('devicesTable').innerHTML = `
-        <table>
-            <tr><th>Device</th><th>Type</th><th>Inbox</th></tr>
-            ${rows}
-        </table>
-    `;
+async function resetMesh() {
+    await fetch('/api/mesh/reset', { method: 'POST' });
+    log('Mesh + idempotency cache + transactions + balances reset');
+    refresh();
 }
 
-async function refreshTransactions() {
-    const res = await fetch('/api/transactions');
-    const txs = await res.json();
-    if (!txs.length) {
-        document.getElementById('txTable').innerHTML = '<p class="empty-state">No settled transactions yet</p>';
-        return;
-    }
-    let rows = txs.map(t => `
-        <tr>
-            <td>${t.senderVpa}</td>
-            <td>${t.receiverVpa}</td>
-            <td>₹${t.amount}</td>
-            <td class="hash-cell">${t.packetHash.substring(0, 16)}...</td>
-        </tr>
-    `).join('');
-    document.getElementById('txTable').innerHTML = `
-        <table>
-            <tr><th>Sender</th><th>Receiver</th><th>Amount</th><th>Packet Hash</th></tr>
-            ${rows}
-        </table>
-    `;
-}
+refresh();
+setInterval(refresh, 3000);
