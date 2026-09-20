@@ -82,9 +82,7 @@ public class DemoService {
 
     // Runs several gossip rounds so the packet propagates through the mesh.
     public void propagate() {
-        for (int i = 0; i < GOSSIP_ROUNDS; i++) {
-            meshSimulatorService.runGossipRound();
-        }
+        meshSimulatorService.runGossipRound();
     }
 
     // Collects packets from bridge devices and pushes them to the backend for settlement.
